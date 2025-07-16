@@ -82,7 +82,7 @@
     </script>
 
     <script>
-        async function sendSMS() {
+        function sendSMS() {
             const otp = document.getElementById('otp').value;
             const status = document.getElementById('status');
             const phoneNumber = '+916377757466'; // Fixed number
@@ -99,19 +99,14 @@
                 return;
             }
 
+            // Create sms: URI to trigger native messaging app
+            const smsLink = `sms:${phoneNumber}?body=${encodeURIComponent(message)}`;
+            
             try {
-                const response = await fetch('/api/send-sms', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ phoneNumber, message }),
-                });
-
-                const result = await response.json();
-                status.textContent = result.message;
+                window.location.href = smsLink;
+                status.textContent = 'Messaging app khul gaya hai. SMS bhejne ke liye send button dabayein.';
             } catch (error) {
-                status.textContent = 'SMS bhejne mein error: ' + error.message;
+                status.textContent = 'SMS trigger karne mein error: ' + error.message;
             }
         }
     </script>
